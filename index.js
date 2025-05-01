@@ -35,6 +35,7 @@ io.on('connection', socket => {
         socket.userId = userId;
         console.log("😊 Users: ", users);
         io.emit('userCount', Object.keys(users).length);
+        io.emit('userList', Object.keys(users));
     });
 
     socket.on('privateMessage', ({ toUserId, message }) => {
@@ -42,8 +43,8 @@ io.on('connection', socket => {
         if (sentUser) {
             // console.log(sentUser);
 
-            io.to(sentUser).emit('privateMessage', {
-                From: socket.userId,
+            io.to(sentUser).to(socket.id).emit('privateMessage', {
+                from: socket.userId,
                 message
             })
         }
