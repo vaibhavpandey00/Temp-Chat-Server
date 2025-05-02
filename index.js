@@ -23,7 +23,7 @@ app.use(cors());
 app.use(express.json());
 app.use(bodyParser.json());
 
-const users = {}
+let users = {}
 
 // Function to add a random ID to each messages using UUID
 const randId = () => {
