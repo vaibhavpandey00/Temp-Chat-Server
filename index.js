@@ -5,6 +5,7 @@ dotenv.config();
 import http from "http";
 import { Server } from "socket.io";
 import bodyParser from "body-parser";
+import { v4 as uuidv4 } from 'uuid';
 
 const app = express();
 const server = http.createServer(app);
@@ -20,6 +21,11 @@ app.use(express.json());
 app.use(bodyParser.json());
 
 const users = {}
+
+// Function to add a random ID to each messages using UUID
+const randId = () => {
+    return uuidv4();
+}
 
 io.on('connection', socket => {
     // console.log(`A User is connected: ${socket.id}`);
@@ -38,11 +44,11 @@ io.on('connection', socket => {
     socket.on('privateMessage', ({ toUserId, message }) => {
         const sentUser = users[ toUserId ];
         if (sentUser) {
-            // Send to recipient
             io.to(sentUser).to(socket.id).emit('privateMessage', {
                 from: socket.userId,
                 message,
-                isPrivate: true
+                isPrivate: true,
+                id: randId()
             });
         }
     })
@@ -51,7 +57,8 @@ io.on('connection', socket => {
         io.emit('groupMessage', {
             from: socket.userId,
             message,
-            isPrivate: false
+            isPrivate: false,
+            id: randId()
         })
     })
 
