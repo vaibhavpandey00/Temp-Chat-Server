@@ -10,10 +10,11 @@ import { getOrigins } from "./components/getAllowedOrigins.js";
 
 const app = express();
 const server = http.createServer(app);
-const origin = getOrigins();
+const origins = getOrigins();
+
 const io = new Server(server, {
     cors: {
-        origin,
+        origin: origins,
         methods: [ "GET", "POST" ]
     }
 });
@@ -38,12 +39,13 @@ io.on('connection', socket => {
 
         users[ userId ] = socket.id;
         socket.userId = userId;
-        // console.log("😊 Users: ", users);
+        console.log("🟢 Users: ", users);
         io.emit('userCount', Object.keys(users).length);
         io.emit('userList', Object.keys(users));
     });
 
     socket.on('privateMessage', ({ toUserId, message }) => {
+        if (!socket.userId) return;
         const sentUser = users[ toUserId ];
         if (sentUser) {
             io.to(sentUser).to(socket.id).emit('privateMessage', {
@@ -56,6 +58,7 @@ io.on('connection', socket => {
     })
 
     socket.on('groupMessage', (message) => {
+        if (!socket.userId) return;
         io.emit('groupMessage', {
             from: socket.userId,
             message,
@@ -82,11 +85,16 @@ app.post("/checkUsername", (req, res) => {
     const { username } = req.body;
     // console.log("Username: ", username);
 
-    if (users[ username ]) {
+    if (users[ username ] || users.length >= 10) {
         res.json({ exists: true }).status(400);
     } else {
         res.json({ exists: false }).status(200);
     }
+})
+
+app.get("/api/reset/all", (req, res) => {
+    users = {};
+    res.send("All users have been reset").status(200);
 })
 
 const PORT = process.env.PORT || 8000
