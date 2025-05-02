@@ -22,18 +22,15 @@ app.use(bodyParser.json());
 const users = {}
 
 io.on('connection', socket => {
-    console.log(`A User is connected: ${socket.id}`);
+    // console.log(`A User is connected: ${socket.id}`);
 
     socket.on('register', ({ userId }) => {
         // Check if user with userId already registered
-        if (users[ userId ]) {
-            socket.emit('userExists', true);
-            return;
-        }
+        if (users[ userId ]) return;
 
         users[ userId ] = socket.id;
         socket.userId = userId;
-        console.log("😊 Users: ", users);
+        // console.log("😊 Users: ", users);
         io.emit('userCount', Object.keys(users).length);
         io.emit('userList', Object.keys(users));
     });
@@ -41,19 +38,20 @@ io.on('connection', socket => {
     socket.on('privateMessage', ({ toUserId, message }) => {
         const sentUser = users[ toUserId ];
         if (sentUser) {
-            // console.log(sentUser);
-
+            // Send to recipient
             io.to(sentUser).to(socket.id).emit('privateMessage', {
                 from: socket.userId,
-                message
-            })
+                message,
+                isPrivate: true
+            });
         }
     })
 
     socket.on('groupMessage', (message) => {
         io.emit('groupMessage', {
             from: socket.userId,
-            message
+            message,
+            isPrivate: false
         })
     })
 
@@ -73,7 +71,7 @@ app.get("/", (req, res) => {
 
 app.post("/checkUsername", (req, res) => {
     const { username } = req.body;
-    console.log("Username: ", username);
+    // console.log("Username: ", username);
 
     if (users[ username ]) {
         res.json({ exists: true }).status(400);
