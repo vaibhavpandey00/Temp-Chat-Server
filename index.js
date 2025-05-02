@@ -6,12 +6,14 @@ import http from "http";
 import { Server } from "socket.io";
 import bodyParser from "body-parser";
 import { v4 as uuidv4 } from 'uuid';
+import { getOrigins } from "./components/getAllowedOrigins.js";
 
 const app = express();
 const server = http.createServer(app);
+const origin = getOrigins();
 const io = new Server(server, {
     cors: {
-        origin: "*",
+        origin,
         methods: [ "GET", "POST" ]
     }
 });
